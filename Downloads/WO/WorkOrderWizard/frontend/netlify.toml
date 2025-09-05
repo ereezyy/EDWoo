@@ -1,0 +1,17 @@
+[build]
+  publish = ".next"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  NEXT_PUBLIC_API_URL = "https://api.workorderwizard.com"
+
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_API_URL = "https://api-preview.workorderwizard.com"

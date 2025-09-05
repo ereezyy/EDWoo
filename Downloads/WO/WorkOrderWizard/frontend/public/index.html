@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkOrderWizard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 32px;
+        }
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+        .status {
+            background: #dbeafe;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .status h2 {
+            font-weight: 600;
+            color: #1e3a8a;
+            margin: 0 0 8px 0;
+        }
+        .status p {
+            color: #1d4ed8;
+            font-size: 14px;
+            margin: 4px 0;
+        }
+        .features {
+            background: #dcfce7;
+            padding: 16px;
+            border-radius: 6px;
+        }
+        .features h2 {
+            font-weight: 600;
+            color: #166534;
+            margin: 0 0 8px 0;
+        }
+        .features ul {
+            color: #15803d;
+            font-size: 14px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .features li {
+            margin-bottom: 4px;
+        }
+        .center {
+            text-align: center;
+            margin-top: 24px;
+        }
+        .button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+        }
+        .button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="title">WorkOrderWizard</h1>
+        <p class="subtitle">YMCA Maintenance Management System</p>
+        
+        <div class="status">
+            <h2>System Status</h2>
+            <p>Frontend: ✅ Running</p>
+            <p>Backend: ✅ Ready</p>
+            <p>Database: ✅ Connected</p>
+        </div>
+        
+        <div class="features">
+            <h2>Features</h2>
+            <ul>
+                <li>• Work Order Management</li>
+                <li>• SMS Notifications via Twilio</li>
+                <li>• Shopify Integration</li>
+                <li>• Firebase Authentication</li>
+            </ul>
+        </div>
+        
+        <div class="center">
+            <a href="/dashboard" class="button">
+                Go to Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+</html>

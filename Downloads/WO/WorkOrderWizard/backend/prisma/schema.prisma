@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkOrderStatus {
+  open
+  in_progress
+  completed
+}
+
+enum UserRole {
+  admin
+  worker
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  role         UserRole
+  firebase_uid String   @unique
+  created_at   DateTime @default(now())
+  
+  // Relations
+  work_orders  WorkOrder[]
+  
+  @@map("users")
+}
+
+model WorkOrder {
+  id               String          @id @default(uuid())
+  title            String
+  description      String
+  status           WorkOrderStatus @default(open)
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+  assigned_user_id String?
+  shopify_order_id String?
+  
+  // Relations
+  assigned_user    User?            @relation(fields: [assigned_user_id], references: [id])
+  logs            WorkOrderLog[]
+  payments        Payment[]
+  
+  @@map("work_orders")
+}
+
+model WorkOrderLog {
+  id             String    @id @default(uuid())
+  work_order_id  String
+  action         String
+  details        String
+  created_at     DateTime  @default(now())
+  
+  // Relations
+  work_order     WorkOrder @relation(fields: [work_order_id], references: [id], onDelete: Cascade)
+  
+  @@map("work_order_logs")
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  work_order_id     String
+  stripe_payment_id String        @unique
+  amount            Decimal       @db.Decimal(10, 2)
+  status            PaymentStatus @default(pending)
+  created_at        DateTime      @default(now())
+  
+  // Relations
+  work_order        WorkOrder     @relation(fields: [work_order_id], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
