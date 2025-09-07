@@ -79,7 +79,7 @@ const getShopifyOrder = (orderId) => __awaiter(void 0, void 0, void 0, function*
 exports.getShopifyOrder = getShopifyOrder;
 const syncWorkOrderWithShopify = (workOrderId, shopifyOrderId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const order = yield getShopifyOrder(shopifyOrderId);
+        const order = yield (0, exports.getShopifyOrder)(shopifyOrderId);
         return {
             work_order_id: workOrderId,
             shopify_order: order,
