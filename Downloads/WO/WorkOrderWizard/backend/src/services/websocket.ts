@@ -1,4 +1,4 @@
-import { Server as SocketIOServer } from 'socket.io'
+import { Server as SocketIOServer, Socket } from 'socket.io'
 import { Server as HTTPServer } from 'http'
 import jwt from 'jsonwebtoken'
 
@@ -9,7 +9,7 @@ interface AuthenticatedSocket extends Socket {
 
 export class WebSocketService {
   private io: SocketIOServer
-  
+
   constructor(server: HTTPServer) {
     this.io = new SocketIOServer(server, {
       cors: {
@@ -17,7 +17,7 @@ export class WebSocketService {
         methods: ["GET", "POST"]
       }
     })
-    
+
     this.setupMiddleware()
     this.setupEventHandlers()
   }
@@ -25,7 +25,7 @@ export class WebSocketService {
   private setupMiddleware() {
     this.io.use((socket: any, next) => {
       const token = socket.handshake.auth.token
-      
+
       if (!token) {
         return next(new Error('Authentication error'))
       }
@@ -44,7 +44,7 @@ export class WebSocketService {
   private setupEventHandlers() {
     this.io.on('connection', (socket: AuthenticatedSocket) => {
       console.log(`User ${socket.userId} connected`)
-      
+
       // Join user to their role-based room
       socket.join(`role:${socket.userRole}`)
       socket.join(`user:${socket.userId}`)

@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.confirmPayment = exports.createPaymentIntent = void 0;
 const stripe_1 = __importDefault(require("stripe"));
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16',
+    apiVersion: '2022-11-15',
 });
 const createPaymentIntent = (amount, workOrderId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
