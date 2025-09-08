@@ -17,13 +17,15 @@
   "dependencies": {
     "@prisma/client": "^5.1.1",
     "@shopify/shopify-api": "^8.0.1",
-    "@vercel/node": "^4.0.0",
+    "@types/socket.io": "^3.0.1",
+    "@vercel/node": "^2.3.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "firebase-admin": "^13.5.0",
     "jsonwebtoken": "^9.0.1",
     "prisma": "^5.1.1",
+    "socket.io": "^4.8.1",
     "stripe": "^12.18.0",
     "twilio": "^4.14.1",
     "zod": "^3.21.4"

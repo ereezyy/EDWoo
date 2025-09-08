@@ -42,12 +42,12 @@ export class WebSocketService {
   }
 
   private setupEventHandlers() {
-    this.io.on('connection', (socket: AuthenticatedSocket) => {
-      console.log(`User ${socket.userId} connected`)
+    this.io.on('connection', (socket: Socket & { userId?: string; userRole?: string }) => {
+      console.log('User connected:', socket.userId)
 
-      // Join user to their role-based room
-      socket.join(`role:${socket.userRole}`)
-      socket.join(`user:${socket.userId}`)
+      // Join user-specific rooms
+      if (socket.userRole) socket.join(`role:${socket.userRole}`)
+      if (socket.userId) socket.join(`user:${socket.userId}`)
 
       socket.on('join-work-order', (workOrderId: string) => {
         socket.join(`work-order:${workOrderId}`)

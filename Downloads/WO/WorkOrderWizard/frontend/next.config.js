@@ -29,6 +29,9 @@ const nextConfig = {
   // appDir is now stable in Next.js 14, no need for experimental flag
   poweredByHeader: false, // Remove X-Powered-By header for security
 
+  // Use standard Next.js deployment
+  trailingSlash: false,
+
   // Optimize for Vercel deployment
   // This ensures that all dependencies are properly installed
   // during the build process
@@ -87,6 +90,12 @@ const nextConfig = {
       'tailwindcss-animate': hasTailwindAnimate ? false : path.resolve(__dirname, './tailwind-animate-stub.js'),
     };
 
+    // Exclude socket.io-client from server-side bundling
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push('socket.io-client');
+    }
+
     // Force specific modules to be resolved from the project's node_modules
     config.resolve.exportsFields = ['exports', 'browser', 'module', 'main'];
     config.resolve.preferRelative = true;
@@ -127,3 +136,4 @@ if (!hasTailwindAnimate) {
 }
 
 module.exports = nextConfig;
+
