@@ -332,7 +332,7 @@ class TTSProvider:
             if temp_output:
                 try:
                     os.unlink(output_file)
-                except:
+                except OSError:
                     pass
             raise
 
@@ -448,10 +448,10 @@ class TTSProvider:
                     output_file = self.synthesize_speech(text, stream=False)
                     if output_file:
                         self._stream_audio(output_file)
-                        # Delete the temporary file
+                        # Delete the temporary file (ignore errors)
                         try:
                             os.unlink(output_file)
-                        except:
+                        except OSError:
                             pass
                 except Exception as e:
                     print(f"Error in TTS streaming: {e}")
