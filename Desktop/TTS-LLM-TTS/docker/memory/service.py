@@ -1,20 +1,24 @@
 """
-Memory Microservice - Conversation storage and retrieval
+Memory Microservice - Conversation storage and retrieval.
+
+This service provides persistent storage for conversations,
+including CRUD operations, search, and summarization.
 """
 import os
+import sys
 import logging
+from typing import List, Dict, Optional, Any
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict, Optional
 import uvicorn
 
-# Import from main project
-import sys
+# Add app directory to path for importing mounted modules
 sys.path.insert(0, '/app')
 
-from memory.memory_manager import MemoryManager
-from config import MEMORY_CONFIG
+from memory.memory_manager import MemoryManager  # noqa: E402
+from config import MEMORY_CONFIG  # noqa: E402
 
 # Setup logging
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
@@ -156,10 +160,14 @@ async def summarize_conversation(conversation_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
-async def health():
-    """Health check endpoint"""
+async def health() -> Dict[str, Any]:
+    """Health check endpoint for service monitoring.
+
+    Returns:
+        Service status with storage type information.
+    """
     if memory is None:
-        return {"status": "initializing"}
+        return {"status": "initializing", "service": "memory"}
     return {
         "status": "ok",
         "service": "memory",
