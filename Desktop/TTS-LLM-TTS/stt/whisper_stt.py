@@ -14,7 +14,12 @@ import torch
 import sounddevice as sd
 import whisper
 from pydub import AudioSegment
-from ..config import STT_CONFIG
+
+# Handle both package and direct imports
+try:
+    from ..config import STT_CONFIG
+except ImportError:
+    from config import STT_CONFIG
 
 
 class WhisperSTT:
