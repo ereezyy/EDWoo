@@ -25,7 +25,28 @@ ORCHESTRATOR_URL = os.getenv('ORCHESTRATOR_URL', 'http://orchestrator:5000')
 @app.route('/')
 def index():
     """Serve the main UI page"""
-    return render_template('index.html')
+    # Get personality profiles
+    try:
+        response = requests.get(f"{ORCHESTRATOR_URL}/health", timeout=5)
+        orchestrator_available = response.status_code == 200
+    except:
+        orchestrator_available = False
+
+    # Default personality profiles
+    personalities = [
+        {"name": "assistant", "display_name": "Standard Assistant"},
+        {"name": "friendly", "display_name": "Friendly & Casual"},
+        {"name": "professional", "display_name": "Professional"},
+        {"name": "technical", "display_name": "Technical Expert"}
+    ]
+
+    return render_template(
+        'index.html',
+        theme='dark',
+        personalities=personalities,
+        active_personality='assistant',
+        orchestrator_available=orchestrator_available
+    )
 
 @app.route('/health')
 def health():
