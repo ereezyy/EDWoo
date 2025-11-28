@@ -1,22 +1,26 @@
 """
-TTS Microservice - Text-to-Speech synthesis
+TTS Microservice - Text-to-Speech synthesis.
+
+This service provides text-to-speech conversion using multiple
+TTS engines including Sesame CSM, Chatterbox, Orpheus, and others.
 """
 import os
+import sys
 import logging
 import base64
+from typing import Optional, Dict, Any, List
+
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
-from typing import Optional
 import uvicorn
 
-# Import from main project
-import sys
+# Add app directory to path for importing mounted modules
 sys.path.insert(0, '/app')
 
-from tts.tts_provider import TTSProvider
-from config import TTS_CONFIG
+from tts.tts_provider import TTSProvider  # noqa: E402
+from config import TTS_CONFIG  # noqa: E402
 
 # Setup logging
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
@@ -77,10 +81,10 @@ async def synthesize(request: SynthesizeRequest):
         with open(audio_file, 'rb') as f:
             audio_data = f.read()
 
-        # Clean up temp file
+        # Clean up temp file (ignore errors - file may not exist)
         try:
             os.remove(audio_file)
-        except:
+        except OSError:
             pass
 
         if request.return_base64:
@@ -101,8 +105,10 @@ async def synthesize(request: SynthesizeRequest):
                 }
             )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Synthesis error: {e}")
+        logger.error(f"Synthesis error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/clone_voice")
@@ -120,10 +126,10 @@ async def clone_voice(audio: UploadFile = File(...)):
         # Clone voice
         success = tts.clone_voice(temp_path)
 
-        # Clean up
+        # Clean up (ignore errors - file may not exist)
         try:
             os.remove(temp_path)
-        except:
+        except OSError:
             pass
 
         if success:
@@ -131,15 +137,21 @@ async def clone_voice(audio: UploadFile = File(...)):
         else:
             raise HTTPException(status_code=400, detail="Voice cloning failed")
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Voice cloning error: {e}")
+        logger.error(f"Voice cloning error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
-async def health():
-    """Health check endpoint"""
+async def health() -> Dict[str, Any]:
+    """Health check endpoint for service monitoring.
+
+    Returns:
+        Service status with engine and voice information.
+    """
     if tts is None:
-        return {"status": "initializing"}
+        return {"status": "initializing", "service": "tts"}
     return {
         "status": "ok",
         "service": "tts",
@@ -148,8 +160,12 @@ async def health():
     }
 
 @app.get("/engines")
-async def list_engines():
-    """List available TTS engines"""
+async def list_engines() -> Dict[str, Any]:
+    """List available TTS engines.
+
+    Returns:
+        Available engines and currently active engine.
+    """
     return {
         "available_engines": [
             "sesame_csm",
@@ -163,8 +179,15 @@ async def list_engines():
     }
 
 @app.get("/voices")
-async def list_voices():
-    """List available voices for current engine"""
+async def list_voices() -> Dict[str, Any]:
+    """List available voices for current engine.
+
+    Returns:
+        Available voices for the active TTS engine.
+
+    Raises:
+        HTTPException: If TTS is not initialized.
+    """
     if tts is None:
         raise HTTPException(status_code=503, detail="TTS not initialized")
 
