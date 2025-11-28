@@ -1,0 +1,230 @@
+# TTS-LLM-TTS Docker Compose Configuration
+# Microservices architecture for scalable voice assistant deployment
+
+services:
+  # Speech-to-Text Service (Whisper)
+  stt:
+    build:
+      context: ./docker/stt
+      dockerfile: Dockerfile
+    container_name: tts-llm-tts-stt
+    ports:
+      - "${STT_PORT:-5001}:5001"
+    volumes:
+      - ./config.py:/app/config.py:ro
+      - ./stt:/app/stt:ro
+      - ./data/logs:/app/logs
+      - model_cache:/cache
+    environment:
+      - STT_PORT=5001
+      - CACHE_DIR=/cache
+      - USE_GPU=${USE_GPU:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              count: 1
+    runtime: nvidia
+    networks:
+      - voice-assistant-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # LLM Service (OpenRouter, OpenAI, Anthropic, Local)
+  llm:
+    build:
+      context: ./docker/llm
+      dockerfile: Dockerfile
+    container_name: tts-llm-tts-llm
+    ports:
+      - "${LLM_PORT:-5002}:5002"
+    volumes:
+      - ./config.py:/app/config.py:ro
+      - ./llm:/app/llm:ro
+      - ./data/logs:/app/logs
+      - model_cache:/cache
+    environment:
+      - LLM_PORT=5002
+      - CACHE_DIR=/cache
+      - USE_GPU=${USE_GPU:-auto}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              count: 1
+    runtime: nvidia
+    networks:
+      - voice-assistant-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+
+  # TTS Service (Chatterbox, Orpheus, Higgs, XTTS, Kokoro, Sesame CSM)
+  tts:
+    build:
+      context: ./docker/tts
+      dockerfile: Dockerfile
+    container_name: tts-llm-tts-tts
+    ports:
+      - "${TTS_PORT:-5003}:5003"
+    volumes:
+      - ./config.py:/app/config.py:ro
+      - ./tts:/app/tts:ro
+      - ./data/logs:/app/logs
+      - ./data/voice_samples:/app/voice_samples
+      - model_cache:/cache
+    environment:
+      - TTS_PORT=5003
+      - CACHE_DIR=/cache
+      - USE_GPU=${USE_GPU:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+      - HUGGING_FACE_TOKEN=${HUGGING_FACE_TOKEN}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - HF_HOME=/cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              count: 1
+    runtime: nvidia
+    networks:
+      - voice-assistant-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 300s
+
+  # Memory Service (Persistent conversation storage)
+  memory:
+    build:
+      context: ./docker/memory
+      dockerfile: Dockerfile
+    container_name: tts-llm-tts-memory
+    ports:
+      - "${MEMORY_PORT:-5004}:5004"
+    volumes:
+      - ./config.py:/app/config.py:ro
+      - ./memory:/app/memory:ro
+      - ./data/conversations:/app/data
+      - ./data/logs:/app/logs
+    environment:
+      - MEMORY_PORT=5004
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    networks:
+      - voice-assistant-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Orchestrator Service (Coordinates all services)
+  orchestrator:
+    build:
+      context: ./docker/orchestrator
+      dockerfile: Dockerfile
+    container_name: tts-llm-tts-orchestrator
+    ports:
+      - "${ORCHESTRATOR_PORT:-5000}:5000"
+    volumes:
+      - ./config.py:/app/config.py:ro
+      - ./core.py:/app/core.py:ro
+      - ./personality:/app/personality:ro
+      - ./data/logs:/app/logs
+    environment:
+      - ORCHESTRATOR_PORT=5000
+      - STT_SERVICE_URL=http://stt:5001
+      - LLM_SERVICE_URL=http://llm:5002
+      - TTS_SERVICE_URL=http://tts:5003
+      - MEMORY_SERVICE_URL=http://memory:5004
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      stt:
+        condition: service_healthy
+      llm:
+        condition: service_healthy
+      tts:
+        condition: service_healthy
+      memory:
+        condition: service_healthy
+    networks:
+      - voice-assistant-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Web UI Service (Flask + Socket.IO)
+  webui:
+    build:
+      context: ./docker/webui
+      dockerfile: Dockerfile
+    container_name: tts-llm-tts-webui
+    ports:
+      - "${WEBUI_PORT:-8080}:8080"
+    volumes:
+      - ./ui:/app/ui:ro
+      - ./data/logs:/app/logs
+    environment:
+      - WEBUI_PORT=8080
+      - ORCHESTRATOR_URL=http://orchestrator:5000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+    networks:
+      - voice-assistant-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  voice-assistant-net:
+    driver: bridge
+
+volumes:
+  model_cache:
+    driver: local
