@@ -8,21 +8,16 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY ../../memory/requirements.txt ./memory_requirements.txt
+# Install Python dependencies (requirements will be mounted at runtime)
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    aiofiles
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r memory_requirements.txt && \
-    pip install --no-cache-dir fastapi uvicorn[standard]
-
-# Copy application code
-COPY ../../config.py ./config.py
-COPY ../../memory ./memory
-
-# Copy service runner
+# Copy service runner only (other files mounted via docker-compose)
 COPY service.py ./service.py
 
-#Create data directory
+# Create data directory
 RUN mkdir -p /app/data
 
 # Expose port

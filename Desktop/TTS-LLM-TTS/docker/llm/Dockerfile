@@ -10,18 +10,16 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY ../../llm/requirements.txt ./llm_requirements.txt
+# Install Python dependencies (requirements will be mounted at runtime)
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    httpx \
+    openai \
+    anthropic \
+    requests
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r llm_requirements.txt && \
-    pip install --no-cache-dir fastapi uvicorn[standard] httpx
-
-# Copy application code
-COPY ../../config.py ./config.py
-COPY ../../llm ./llm
-
-# Copy service runner
+# Copy service runner only (other files mounted via docker-compose)
 COPY service.py ./service.py
 
 # Expose port

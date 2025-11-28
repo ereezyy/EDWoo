@@ -10,18 +10,18 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY ../../stt/requirements.txt ./stt_requirements.txt
+# Install Python dependencies (requirements will be mounted at runtime)
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    python-multipart \
+    torch \
+    torchaudio \
+    openai-whisper \
+    soundfile \
+    numpy
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r stt_requirements.txt && \
-    pip install --no-cache-dir fastapi uvicorn[standard] python-multipart torch torchaudio
-
-# Copy application code
-COPY ../../config.py ./config.py
-COPY ../../stt ./stt
-
-# Copy service runner
+# Copy service runner only (other files mounted via docker-compose)
 COPY service.py ./service.py
 
 # Expose port

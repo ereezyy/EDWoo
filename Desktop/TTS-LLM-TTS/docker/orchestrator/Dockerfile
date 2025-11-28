@@ -8,15 +8,13 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir fastapi uvicorn[standard] httpx
+# Install Python dependencies (requirements will be mounted at runtime)
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    httpx
 
-# Copy application code
-COPY ../../config.py ./config.py
-COPY ../../core.py ./core.py
-COPY ../../personality ./personality
-
-# Copy service runner
+# Copy service runner only (other files mounted via docker-compose)
 COPY service.py ./service.py
 
 # Expose port

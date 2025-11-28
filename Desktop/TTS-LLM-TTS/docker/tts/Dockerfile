@@ -11,18 +11,19 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY ../../tts/requirements.txt ./tts_requirements.txt
+# Install Python dependencies (requirements will be mounted at runtime)
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    python-multipart \
+    torch \
+    torchaudio \
+    transformers \
+    soundfile \
+    scipy \
+    numpy
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r tts_requirements.txt && \
-    pip install --no-cache-dir fastapi uvicorn[standard] python-multipart torch torchaudio transformers
-
-# Copy application code
-COPY ../../config.py ./config.py
-COPY ../../tts ./tts
-
-# Copy service runner
+# Copy service runner only (other files mounted via docker-compose)
 COPY service.py ./service.py
 
 # Expose port

@@ -8,13 +8,15 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir flask flask-socketio flask-cors requests
+# Install Python dependencies (UI files will be mounted at runtime)
+RUN pip install --no-cache-dir \
+    flask \
+    flask-socketio \
+    flask-cors \
+    requests \
+    eventlet
 
-# Copy application code
-COPY ../../ui ./ui
-
-# Copy service runner
+# Copy service runner only (UI files mounted via docker-compose)
 COPY service.py ./service.py
 
 # Expose port
