@@ -1,18 +1,18 @@
 """
-Orchestrator Microservice - Coordinates all services
+Orchestrator Microservice - Coordinates all services.
+
+This service acts as the central coordinator for the TTS-LLM-TTS system,
+managing communication between STT, LLM, TTS, and Memory services.
 """
 import os
 import logging
+from typing import Dict, Optional, Any
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict, Optional
 import httpx
 import uvicorn
-
-# Import from main project
-import sys
-sys.path.insert(0, '/app')
 
 # Setup logging
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
@@ -152,33 +152,40 @@ async def synthesize_response(conversation_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
-async def health():
-    """Health check endpoint"""
-    # Check if we can reach other services
-    services_status = {}
+async def health() -> Dict[str, Any]:
+    """Health check endpoint with downstream service status.
 
+    Returns:
+        JSON with orchestrator status and status of all downstream services.
+    """
+    services_status: Dict[str, str] = {}
+
+    # Check STT service
     try:
         resp = await http_client.get(f"{STT_SERVICE_URL}/health", timeout=2.0)
         services_status["stt"] = "ok" if resp.status_code == 200 else "error"
-    except:
+    except Exception:
         services_status["stt"] = "unreachable"
 
+    # Check LLM service
     try:
         resp = await http_client.get(f"{LLM_SERVICE_URL}/health", timeout=2.0)
         services_status["llm"] = "ok" if resp.status_code == 200 else "error"
-    except:
+    except Exception:
         services_status["llm"] = "unreachable"
 
+    # Check TTS service
     try:
         resp = await http_client.get(f"{TTS_SERVICE_URL}/health", timeout=2.0)
         services_status["tts"] = "ok" if resp.status_code == 200 else "error"
-    except:
+    except Exception:
         services_status["tts"] = "unreachable"
 
+    # Check Memory service
     try:
         resp = await http_client.get(f"{MEMORY_SERVICE_URL}/health", timeout=2.0)
         services_status["memory"] = "ok" if resp.status_code == 200 else "error"
-    except:
+    except Exception:
         services_status["memory"] = "unreachable"
 
     return {
